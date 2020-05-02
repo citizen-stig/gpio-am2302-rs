@@ -1,0 +1,8 @@
+[package]
+name = "rust_gpio"
+version = "0.1.0"
+authors = ["Nikolai Golub <nikolay.v.golub@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+gpio-cdev = "0.2"
