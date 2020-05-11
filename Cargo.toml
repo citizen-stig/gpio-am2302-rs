@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 gpio-cdev = "0.2"
+#sysfs_gpio = "0.5"
