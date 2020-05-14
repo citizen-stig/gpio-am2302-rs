@@ -9,16 +9,27 @@ pub struct Reading {
 
 #[derive(Debug, PartialEq)]
 pub enum CreationError {
-    WrongBitsCount,
     // Wrong number of input bites, should be 40
-    MalformedData,
+    WrongBitsCount,
+
     // Something wrong with conversion to bytes
-    ParityBitMismatch,
+    MalformedData,
+
     // Parity Bit Validation Failed
-    OutOfSpecValue,       // Value is outside of specification
+    ParityBitMismatch,
+
+    // Value is outside of specification
+    OutOfSpecValue,
 }
 
 impl Reading {
+    pub fn new(temperature: f32, humidity: f32) -> Self {
+        Reading {
+            temperature,
+            humidity,
+        }
+    }
+
     pub fn from_binary_vector(data: &[u8]) -> Result<Self, CreationError> {
         if data.len() != 40 {
             return Err(CreationError::WrongBitsCount);
@@ -42,13 +53,13 @@ impl Reading {
         }
 
         if bytes[2] > 1 {   // Temperature too high
-            return Err(OutOfSpecValue)
+            return Err(OutOfSpecValue);
         }
 
         let raw_humidity: u16 = (bytes[0] as u16) * 256 + bytes[1] as u16;
         let raw_temperature: f32 = ((bytes[2] as u16) * 256 + bytes[3] as u16) as f32 / 10.0;
         let temperature = if bytes[2] == 0 {
-           raw_temperature * -1.0
+            raw_temperature * -1.0
         } else {
             raw_temperature
         };

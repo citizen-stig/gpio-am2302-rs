@@ -56,9 +56,7 @@ fn do_init(line: &Line) {
     // output.set_value(LOW).unwrap();
 }
 
-pub fn push_pull(gpio_number: u32) {
-    println!("Sleeping for 2 seconds, to be sure, that device is ready");
-    thread::sleep(time::Duration::from_secs(2));
+pub fn push_pull(gpio_number: u32) -> Vec<u8> {
     let line = get_line(gpio_number);
     println!("Line: {:?}", line);
     let mut transitions_made = 0;
@@ -68,13 +66,12 @@ pub fn push_pull(gpio_number: u32) {
         LineRequestFlags::INPUT,
         HIGH,
         "read-data").unwrap();
-
     // println!("init: {:?}", last_state);
 
     let mut last_state = input.get_value().unwrap();
     let mut now = time::Instant::now();
 
-    for _ in 0..100000 {
+    for _ in 0..1000000 {
         let new_state = input.get_value().unwrap();
         if new_state != last_state {
             let since_last = now.elapsed().as_micros();
@@ -93,6 +90,7 @@ pub fn push_pull(gpio_number: u32) {
     }
     println!("Transitions made: {:?}", transitions_made);
     println!("Data: {:?}", data);
+    return data;
 
     // CHECK CONFIRMATION
     // When AM2302 detect the start signal,
@@ -215,6 +213,7 @@ pub fn events_sub(gpio_number: u32) {
         // data.push(bit);
         last_timestamp = Some(evt.timestamp());
         transitions_made += 1;
+        println!("Transitions made: {:?}", transitions_made);
         if transitions_made > 84 {
             break;
         }
