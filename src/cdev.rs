@@ -69,7 +69,7 @@ fn events_to_data(events: &[Event]) -> Vec<u8> {
 pub fn push_pull(gpio_number: u32) -> Vec<u8> {
     let line = get_line(gpio_number);
     let mut events: Vec<Event> = vec![];
-    let contact_time = time::Duration::from_secs(30);
+    let contact_time = time::Duration::from_secs(10);
 
     do_init(&line);
     let input = line.request(
