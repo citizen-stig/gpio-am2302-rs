@@ -23,12 +23,12 @@ pub enum CreationError {
 }
 
 impl Reading {
-    pub fn new(temperature: f32, humidity: f32) -> Self {
-        Reading {
-            temperature,
-            humidity,
-        }
-    }
+    // pub fn new(temperature: f32, humidity: f32) -> Self {
+    //     Reading {
+    //         temperature,
+    //         humidity,
+    //     }
+    // }
 
     pub fn from_binary_vector(data: &[u8]) -> Result<Self, CreationError> {
         if data.len() != 40 {
@@ -44,11 +44,11 @@ impl Reading {
 
         let bytes = match bytes {
             Ok(this_bytes) => this_bytes,
-            Err(e) => return Err(CreationError::MalformedData),
+            Err(_e) => return Err(CreationError::MalformedData),
         };
 
-        let check_sum: u8 = bytes[..4].iter().sum();
-        if check_sum != bytes[4] {
+        let check_sum: u16 = bytes[..4].iter().map(|&bit| bit as u16).sum();
+        if check_sum != (bytes[4] as u16) {
             return Err(CreationError::ParityBitMismatch);
         }
 
@@ -153,7 +153,7 @@ mod tests {
         let result = Reading::from_binary_vector(
             &vec![
                 0, 0, 0, 0, 0, 0, 1, 0,  // humidity high
-                1, 0, 0, 1, 0, 0, 1, 0,  // humidity high
+                1, 0, 0, 1, 0, 0, 1, 0,  // humidity low
                 0, 0, 0, 0, 0, 0, 0, 0,  // temperature high
                 0, 1, 1, 0, 0, 1, 0, 1,  // temperature low
                 1, 1, 1, 1, 1, 0, 0, 1,  // parity
@@ -166,6 +166,20 @@ mod tests {
         };
 
         assert_eq!(result, Ok(expected_reading));
+    }
+
+    #[test]
+    fn add_with_overflow() {
+        let result = Reading::from_binary_vector(
+            &vec![
+                1, 0, 0, 0, 0, 0, 0, 0,  // humidity high
+                1, 0, 0, 0, 0, 1, 0, 1,  // humidity high
+                0, 0, 0, 0, 0, 0, 0, 0,  // temperature high
+                1, 0, 0, 0, 1, 1, 1, 1,  // temperature low
+                0, 0, 0, 1, 0, 1, 0, 1   // parity
+            ]
+        );
+        assert_eq!(result, Err(CreationError::ParityBitMismatch));
     }
 }
 

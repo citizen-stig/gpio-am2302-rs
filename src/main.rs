@@ -6,7 +6,7 @@ mod cdev;
 
 
 use std::{thread, time};
-use cdev::{push_pull, events_sub};
+use cdev::push_pull;
 use am2302::Reading;
 
 
@@ -18,10 +18,10 @@ fn try_read(gpio_number: u32) {
     for data in all_data.windows(40) {
         let result = Reading::from_binary_vector(&data);
         match result {
-            Ok( reading) => {
+            Ok(reading) => {
                 println!("Unbelievable, it is done: {:?}", reading);
-            },
-            Err( e) => {
+            }
+            Err(e) => {
                 println!("Error: {:?}", e)
             }
         }
@@ -33,7 +33,7 @@ fn main() {
     let gpio_number = 4;  // GPIO4  (7)
     for _ in 1..30 {
         println!("Sleeping for another 30 seconds, to be sure, that device is ready");
-        thread::sleep(time::Duration::from_secs(30));
+        thread::sleep(time::Duration::from_secs(10));
         try_read(gpio_number);
     }
 
