@@ -68,23 +68,17 @@ fn events_to_data(events: &[Event]) -> Vec<u8> {
 
 pub fn push_pull(gpio_number: u32) -> Vec<u8> {
     let line = get_line(gpio_number);
-    println!("Line: {:?}", line);
-    // let mut transitions_made = 0;
-    // let mut data: Vec<u8> = Vec::new();
+    let mut events: Vec<Event> = vec![];
+    let contact_time = time::Duration::from_secs(30);
+
     do_init(&line);
     let input = line.request(
         LineRequestFlags::INPUT,
         HIGH,
         "read-data").unwrap();
-    // println!("init: {:?}", last_state);
 
     let mut last_state = input.get_value().unwrap();
     let start = time::Instant::now();
-    // let mut now = time::Instant::now();
-
-    let mut events: Vec<Event> = vec![];
-
-    let contact_time = time::Duration::from_secs(30);
 
     while start.elapsed() < contact_time {
         let new_state = input.get_value().unwrap();
@@ -96,15 +90,11 @@ pub fn push_pull(gpio_number: u32) -> Vec<u8> {
                 EvenType::FallingEdge
             };
             events.push(Event::new(timestamp, event_type));
-            if events.len() > 85 {
+            if events.len() >= 83 {
                break;
             }
             last_state = new_state;
         }
     }
-    println!("Transitions made: {:?}", events.len());
-    // println!("Events: {:?}", events);
-    let data = events_to_data(&events);
-    println!("Data: {:?}", data);
-    return data;
+    events_to_data(&events)
 }

@@ -31,9 +31,10 @@ fn try_read(gpio_number: u32) {
 fn main() {
     // let gpio_number = 17;    // GPIO17 (11)
     let gpio_number = 4;  // GPIO4  (7)
+    let sleep_time = time::Duration::from_secs(5);
     for _ in 1..30 {
-        println!("Sleeping for another 30 seconds, to be sure, that device is ready");
-        thread::sleep(time::Duration::from_secs(10));
+        println!("Sleeping for another {:?}, to be sure that device is ready", sleep_time);
+        thread::sleep(sleep_time);
         try_read(gpio_number);
     }
 
