@@ -23,7 +23,7 @@ fn do_init(line: &Line) {
     thread::sleep(time::Duration::from_millis(3));
 
     // then MCU will pulls up and wait 20-40us for AM2302's response.
-    output.set_value(HIGH).unwrap();
+    // output.set_value(HIGH).unwrap();
     // HM?
     // thread::sleep(time::Duration::from_micros(20));
     // output.set_value(LOW).unwrap();
