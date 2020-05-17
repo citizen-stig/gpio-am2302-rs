@@ -99,7 +99,7 @@ pub fn push_pull(gpio_number: u32) -> Vec<u8> {
                 EvenType::FallingEdge
             };
             events.push(Event::new(timestamp, event_type));
-            if events.len() > 80 {
+            if events.len() > 85 {
                break;
             }
             // let since_last = now.elapsed().as_micros();

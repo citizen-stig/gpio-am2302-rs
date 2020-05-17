@@ -47,29 +47,33 @@ impl Reading {
             Err(_e) => return Err(CreationError::MalformedData),
         };
 
-        let check_sum: u16 = bytes[..4].iter().map(|&bit| bit as u16).sum();
-        if check_sum != (bytes[4] as u16) {
+        // let check_sum: u8 = bytes[..4].iter().sum();
+        let check_sum: u8 = bytes[..4].iter().fold(0 as u8, |result, &value| {
+            result.overflowing_add(value).0
+        });
+        if check_sum != bytes[4] {
             return Err(CreationError::ParityBitMismatch);
         }
 
-        if bytes[2] > 1 {   // Temperature too high
-            return Err(OutOfSpecValue);
-        }
 
         let raw_humidity: u16 = (bytes[0] as u16) * 256 + bytes[1] as u16;
-        let raw_temperature: f32 = ((bytes[2] as u16) * 256 + bytes[3] as u16) as f32 / 10.0;
-        let temperature = if bytes[2] == 0 {
-            raw_temperature * -1.0
+        let raw_temperature: i16 = if bytes[2] >= 128 {
+            bytes[3] as i16 * -1
         } else {
-            raw_temperature
+            (bytes[2] as i16) * 256 + bytes[3] as i16
         };
 
-        // TODO: Check value according to specification
+        let humidity: f32 = raw_humidity as f32 / 10.0;
+        let temperature: f32 = raw_temperature as f32 / 10.0;
 
-        Ok(Reading {
-            temperature,
-            humidity: raw_humidity as f32 / 10.0,
-        })
+        if temperature > 81.0 || temperature < -41.0 {
+            return Err(OutOfSpecValue)
+        }
+        if humidity < 0.0 || humidity > 99.9 {
+            return Err(OutOfSpecValue)
+        }
+
+        Ok(Reading { temperature, humidity, })
     }
 }
 
@@ -78,6 +82,8 @@ mod tests {
     use super::*;
     // Partially based on documentation:
     // http://akizukidenshi.com/download/ds/aosong/AM2302.pdf
+    // and
+    // https://cdn-shop.adafruit.com/datasheets/Digital+humidity+and+temperature+sensor+AM2302.pdf
 
     #[test]
     fn not_enough_bits() {
@@ -133,7 +139,7 @@ mod tests {
         let result = Reading::from_binary_vector(
             &vec![
                 0, 0, 0, 0, 0, 0, 1, 0,  // humidity high
-                1, 0, 0, 1, 0, 0, 1, 0,  // humidity high
+                1, 0, 0, 1, 0, 0, 1, 0,  // humidity low
                 0, 0, 0, 0, 0, 0, 0, 1,  // temperature high
                 0, 0, 0, 0, 1, 1, 0, 1,  // temperature low
                 1, 0, 1, 0, 0, 0, 1, 0,  // parity
@@ -154,9 +160,9 @@ mod tests {
             &vec![
                 0, 0, 0, 0, 0, 0, 1, 0,  // humidity high
                 1, 0, 0, 1, 0, 0, 1, 0,  // humidity low
-                0, 0, 0, 0, 0, 0, 0, 0,  // temperature high
+                1, 0, 0, 0, 0, 0, 0, 0,  // temperature high
                 0, 1, 1, 0, 0, 1, 0, 1,  // temperature low
-                1, 1, 1, 1, 1, 0, 0, 1,  // parity
+                0, 1, 1, 1, 1, 0, 0, 1,  // parity
             ]
         );
 
@@ -167,6 +173,8 @@ mod tests {
 
         assert_eq!(result, Ok(expected_reading));
     }
+
+
 
     #[test]
     fn add_with_overflow() {
@@ -180,6 +188,44 @@ mod tests {
             ]
         );
         assert_eq!(result, Err(CreationError::ParityBitMismatch));
+    }
+
+    #[test]
+    fn another_example() {
+        let result = Reading::from_binary_vector(
+            &vec![
+               0,0,0,0, 0,0,1,0,
+               1,0,0,0, 1,1,0,0,
+               0,0,0,0, 0,0,0,1,
+               0,1,0,1, 1,1,1,1,
+               1,1,1,0, 1,1,1,0,
+            ]
+        );
+        let expected_reading = Reading {
+            temperature: 35.1,
+            humidity: 65.2,
+        };
+
+        assert_eq!(result, Ok(expected_reading));
+    }
+
+    #[test]
+    fn another_example_negative_temp() {
+        let result = Reading::from_binary_vector(
+            &vec![
+                0,0,0,0, 0,0,1,0,
+                1,0,0,0, 1,1,0,0,
+                1,0,0,0, 0,0,0,0,
+                0,1,1,0, 0,1,0,1,
+                0,1,1,1, 0,0,1,1,
+            ]
+        );
+        let expected_reading = Reading {
+            temperature: -10.1,
+            humidity: 65.2,
+        };
+
+        assert_eq!(result, Ok(expected_reading));
     }
 }
 
