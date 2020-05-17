@@ -17,16 +17,13 @@ fn do_init(line: &Line) {
 
     // https://cdn-shop.adafruit.com/datasheets/Digital+humidity+and+temperature+sensor+AM2302.pdf
     // Step 1: MCU send out start signal to AM2302 and AM2302 send response signal to MCU
-
     // MCU will pull low data-bus and this process must beyond at least 1~10ms
     // to ensure AM2302 could detect MCU's signal
     output.set_value(LOW).unwrap();
     thread::sleep(time::Duration::from_millis(3));
-    println!("pull low: {:?}", output.get_value().unwrap());
 
     // then MCU will pulls up and wait 20-40us for AM2302's response.
     output.set_value(HIGH).unwrap();
-    println!("pull high: {:?}", output.get_value().unwrap());
     // HM?
     // thread::sleep(time::Duration::from_micros(20));
     // output.set_value(LOW).unwrap();
@@ -102,17 +99,8 @@ pub fn push_pull(gpio_number: u32) -> Vec<u8> {
             if events.len() > 85 {
                break;
             }
-            // let since_last = now.elapsed().as_micros();
-            // transitions_made += 1;
-            // if last_state == HIGH { // We were on signal
-            //     let bit = if since_last > 35 { 1 } else { 0 };
-            //     data.push(bit);
-            //     // println!(". And it was data: {:?}", bit);
-            // }
             last_state = new_state;
-            // now = time::Instant::now();
         }
-        // thread::sleep(time::Duration::from_micros(1));
     }
     println!("Transitions made: {:?}", events.len());
     // println!("Events: {:?}", events);
