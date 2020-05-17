@@ -51,6 +51,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpio-am2302-rs"
+version = "0.1.0"
+dependencies = [
+ "gpio-cdev",
+]
+
+[[package]]
 name = "gpio-cdev"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -79,13 +86,6 @@ dependencies = [
  "cfg-if",
  "libc",
  "void",
-]
-
-[[package]]
-name = "rust_gpio"
-version = "0.1.0"
-dependencies = [
- "gpio-cdev",
 ]
 
 [[package]]
