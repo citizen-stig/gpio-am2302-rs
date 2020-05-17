@@ -1,5 +1,4 @@
 use crate::binutils::{convert, ConversionError};
-use crate::am2302::CreationError::OutOfSpecValue;
 
 #[derive(Debug, PartialEq)]
 pub struct Reading {
@@ -23,13 +22,6 @@ pub enum CreationError {
 }
 
 impl Reading {
-    // pub fn new(temperature: f32, humidity: f32) -> Self {
-    //     Reading {
-    //         temperature,
-    //         humidity,
-    //     }
-    // }
-
     pub fn from_binary_vector(data: &[u8]) -> Result<Self, CreationError> {
         if data.len() != 40 {
             return Err(CreationError::WrongBitsCount);
@@ -67,13 +59,13 @@ impl Reading {
         let temperature: f32 = raw_temperature as f32 / 10.0;
 
         if temperature > 81.0 || temperature < -41.0 {
-            return Err(OutOfSpecValue)
+            return Err(CreationError::OutOfSpecValue);
         }
         if humidity < 0.0 || humidity > 99.9 {
-            return Err(OutOfSpecValue)
+            return Err(CreationError::OutOfSpecValue);
         }
 
-        Ok(Reading { temperature, humidity, })
+        Ok(Reading { temperature, humidity })
     }
 }
 
@@ -125,7 +117,7 @@ mod tests {
         let result = Reading::from_binary_vector(
             &vec![
                 0, 0, 0, 0, 0, 0, 1, 0,  // humidity high
-                1, 0, 0, 1, 0, 0, 1, 0,  // humidity high
+                1, 0, 0, 1, 0, 0, 1, 0,  // humidity low
                 0, 0, 0, 0, 0, 0, 0, 1,  // temperature high
                 0, 0, 0, 0, 1, 1, 0, 1,  // temperature low
                 1, 0, 1, 1, 0, 0, 1, 0,  // parity
@@ -175,13 +167,12 @@ mod tests {
     }
 
 
-
     #[test]
     fn add_with_overflow() {
         let result = Reading::from_binary_vector(
             &vec![
                 1, 0, 0, 0, 0, 0, 0, 0,  // humidity high
-                1, 0, 0, 0, 0, 1, 0, 1,  // humidity high
+                1, 0, 0, 0, 0, 1, 0, 1,  // humidity low
                 0, 0, 0, 0, 0, 0, 0, 0,  // temperature high
                 1, 0, 0, 0, 1, 1, 1, 1,  // temperature low
                 0, 0, 0, 1, 0, 1, 0, 1   // parity
@@ -194,11 +185,11 @@ mod tests {
     fn another_example() {
         let result = Reading::from_binary_vector(
             &vec![
-               0,0,0,0, 0,0,1,0,
-               1,0,0,0, 1,1,0,0,
-               0,0,0,0, 0,0,0,1,
-               0,1,0,1, 1,1,1,1,
-               1,1,1,0, 1,1,1,0,
+                0, 0, 0, 0, 0, 0, 1, 0,
+                1, 0, 0, 0, 1, 1, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 1,
+                0, 1, 0, 1, 1, 1, 1, 1,
+                1, 1, 1, 0, 1, 1, 1, 0,
             ]
         );
         let expected_reading = Reading {
@@ -213,11 +204,11 @@ mod tests {
     fn another_example_negative_temp() {
         let result = Reading::from_binary_vector(
             &vec![
-                0,0,0,0, 0,0,1,0,
-                1,0,0,0, 1,1,0,0,
-                1,0,0,0, 0,0,0,0,
-                0,1,1,0, 0,1,0,1,
-                0,1,1,1, 0,0,1,1,
+                0, 0, 0, 0, 0, 0, 1, 0,
+                1, 0, 0, 0, 1, 1, 0, 0,
+                1, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 1, 0, 0, 1, 0, 1,
+                0, 1, 1, 1, 0, 0, 1, 1,
             ]
         );
         let expected_reading = Reading {
