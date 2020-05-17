@@ -3,6 +3,7 @@ use gpio_cdev::{Chip, LineRequestFlags, Line};
 
 const LOW: u8 = 0;
 const HIGH: u8 = 1;
+const MAX_NUMBER_OF_READINGS: usize = 83;
 
 fn get_line(gpio_number: u32) -> Line {
     let mut chip = Chip::new("/dev/gpiochip0").unwrap();
@@ -14,19 +15,12 @@ fn do_init(line: &Line) {
         LineRequestFlags::OUTPUT,
         HIGH,
         "pull-down").unwrap();
-
     // https://cdn-shop.adafruit.com/datasheets/Digital+humidity+and+temperature+sensor+AM2302.pdf
     // Step 1: MCU send out start signal to AM2302 and AM2302 send response signal to MCU
     // MCU will pull low data-bus and this process must beyond at least 1~10ms
     // to ensure AM2302 could detect MCU's signal
     output.set_value(LOW).unwrap();
     thread::sleep(time::Duration::from_millis(3));
-
-    // then MCU will pulls up and wait 20-40us for AM2302's response.
-    // output.set_value(HIGH).unwrap();
-    // HM?
-    // thread::sleep(time::Duration::from_micros(20));
-    // output.set_value(LOW).unwrap();
 }
 
 #[derive(Debug, PartialEq)]
@@ -68,10 +62,14 @@ fn events_to_data(events: &[Event]) -> Vec<u8> {
 
 pub fn push_pull(gpio_number: u32) -> Vec<u8> {
     let line = get_line(gpio_number);
-    let mut events: Vec<Event> = vec![];
+    let mut events: Vec<Event> = Vec::with_capacity(MAX_NUMBER_OF_READINGS);
     let contact_time = time::Duration::from_secs(10);
-
     do_init(&line);
+    read_events(&line, &mut events, contact_time);
+    events_to_data(&events)
+}
+
+fn read_events(line: &Line, events: &mut Vec<Event>, contact_time: time::Duration) {
     let input = line.request(
         LineRequestFlags::INPUT,
         HIGH,
@@ -90,11 +88,10 @@ pub fn push_pull(gpio_number: u32) -> Vec<u8> {
                 EvenType::FallingEdge
             };
             events.push(Event::new(timestamp, event_type));
-            if events.len() >= 83 {
-               break;
+            if events.len() >= MAX_NUMBER_OF_READINGS {
+                break;
             }
             last_state = new_state;
         }
     }
-    events_to_data(&events)
 }
