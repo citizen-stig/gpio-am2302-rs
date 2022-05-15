@@ -1,5 +1,5 @@
-# Description
+# GPIO-AM2302-RS
 
-Sample project based on gpio-cdev for reading temperature and humidity from AM2302 sensor.
+> GPIO-AM2302-RS provides a simple interface to use AM2302 Sensor connected through GPIO
 
-Assumes that sensor connected to GPIO4
+> Inspired by https://citizen-stig.github.io/2020/05/17/reading-temperature-sensor-in-rust-using-raspberry-pi-gpio.html
