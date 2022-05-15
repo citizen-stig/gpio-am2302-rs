@@ -16,7 +16,9 @@ pub fn try_read(gpio_number: u32) -> Result<Reading, Am2302ReadError> {
     let all_data = push_pull(gpio_number);
     for data in all_data.windows(40) {
         let result = Reading::from_binary_vector(&data);
-        if let Ok(reading) = result { return Ok(reading) }
+        if let Ok(reading) = result {
+            return Ok(reading);
+        }
     }
     Err(Am2302ReadError::ReadError)
 }
