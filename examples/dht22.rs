@@ -10,7 +10,7 @@ fn main() {
             sleep_time
         );
         thread::sleep(sleep_time);
-        match try_read2(gpio_number) {
+        match try_read(gpio_number) {
             Ok(reading) => println!("Reading: {:?}", reading),
             _ => println!("Unable to get the data"),
         }

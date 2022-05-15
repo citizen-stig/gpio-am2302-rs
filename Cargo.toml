@@ -1,8 +1,14 @@
 [package]
 name = "gpio-am2302-rs"
 version = "0.1.0"
-authors = ["Nikolai Golub <nikolay.v.golub@gmail.com>"]
+authors = ["D'mitri Joseph <a.dmitrijoseph@gmail.com>"]
+license = "MIT"
 edition = "2018"
+description = "GPIO-AM2302-RS provides a simple interface to use AM2302 Sensor connected through GPIO"
+categories = ["embedded", "hardware-support"]
+keywords = ["hal", "AM2302", "DHT22", "GPIO"]
+homepage = "https://github.com/dmitrijoseph/gpio-am2302-rs"
+repository = "https://github.com/dmitrijoseph/gpio-am2302-rs"
 
 [dependencies]
 gpio-cdev = "0.2"

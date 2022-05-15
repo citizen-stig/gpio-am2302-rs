@@ -60,10 +60,10 @@ impl Reading {
         let humidity: f32 = raw_humidity as f32 / 10.0;
         let temperature: f32 = raw_temperature as f32 / 10.0;
 
-        if temperature > 81.0 || temperature < -41.0 {
+        if !(-41.0..=81.0).contains(&temperature) {
             return Err(CreationError::OutOfSpecValue);
         }
-        if humidity < 0.0 || humidity > 99.9 {
+        if !(0.0..=99.9).contains(&humidity) {
             return Err(CreationError::OutOfSpecValue);
         }
 
@@ -90,43 +90,35 @@ mod tests {
 
     #[test]
     fn too_many_enough_bits() {
-        let result = Reading::from_binary_vector(&vec![
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        ]);
+        let result = Reading::from_binary_vector(&[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
         assert_eq!(result, Err(CreationError::WrongBitsCount));
     }
 
     #[test]
     fn malformed_input() {
-        let result = Reading::from_binary_vector(&vec![
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-        ]);
+        let result = Reading::from_binary_vector(&[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2]);
         assert_eq!(result, Err(CreationError::MalformedData));
     }
 
     #[test]
     fn wrong_parity_bit() {
-        let result = Reading::from_binary_vector(&vec![
-            0, 0, 0, 0, 0, 0, 1, 0, // humidity high
+        let result = Reading::from_binary_vector(&[0, 0, 0, 0, 0, 0, 1, 0, // humidity high
             1, 0, 0, 1, 0, 0, 1, 0, // humidity low
             0, 0, 0, 0, 0, 0, 0, 1, // temperature high
             0, 0, 0, 0, 1, 1, 0, 1, // temperature low
-            1, 0, 1, 1, 0, 0, 1, 0, // parity
-        ]);
+            1, 0, 1, 1, 0, 0, 1, 0]);
         assert_eq!(result, Err(CreationError::ParityBitMismatch));
     }
 
     #[test]
     fn correct_reading() {
-        let result = Reading::from_binary_vector(&vec![
-            0, 0, 0, 0, 0, 0, 1, 0, // humidity high
+        let result = Reading::from_binary_vector(&[0, 0, 0, 0, 0, 0, 1, 0, // humidity high
             1, 0, 0, 1, 0, 0, 1, 0, // humidity low
             0, 0, 0, 0, 0, 0, 0, 1, // temperature high
             0, 0, 0, 0, 1, 1, 0, 1, // temperature low
-            1, 0, 1, 0, 0, 0, 1, 0, // parity
-        ]);
+            1, 0, 1, 0, 0, 0, 1, 0]);
 
         let expected_reading = Reading {
             temperature: 26.9,
@@ -138,13 +130,11 @@ mod tests {
 
     #[test]
     fn negative_temperature() {
-        let result = Reading::from_binary_vector(&vec![
-            0, 0, 0, 0, 0, 0, 1, 0, // humidity high
+        let result = Reading::from_binary_vector(&[0, 0, 0, 0, 0, 0, 1, 0, // humidity high
             1, 0, 0, 1, 0, 0, 1, 0, // humidity low
             1, 0, 0, 0, 0, 0, 0, 0, // temperature high
             0, 1, 1, 0, 0, 1, 0, 1, // temperature low
-            0, 1, 1, 1, 1, 0, 0, 1, // parity
-        ]);
+            0, 1, 1, 1, 1, 0, 0, 1]);
 
         let expected_reading = Reading {
             temperature: -10.1,
@@ -156,22 +146,18 @@ mod tests {
 
     #[test]
     fn add_with_overflow() {
-        let result = Reading::from_binary_vector(&vec![
-            1, 0, 0, 0, 0, 0, 0, 0, // humidity high
+        let result = Reading::from_binary_vector(&[1, 0, 0, 0, 0, 0, 0, 0, // humidity high
             1, 0, 0, 0, 0, 1, 0, 1, // humidity low
             0, 0, 0, 0, 0, 0, 0, 0, // temperature high
             1, 0, 0, 0, 1, 1, 1, 1, // temperature low
-            0, 0, 0, 1, 0, 1, 0, 1, // parity
-        ]);
+            0, 0, 0, 1, 0, 1, 0, 1]);
         assert_eq!(result, Err(CreationError::ParityBitMismatch));
     }
 
     #[test]
     fn another_example() {
-        let result = Reading::from_binary_vector(&vec![
-            0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1,
-            1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0,
-        ]);
+        let result = Reading::from_binary_vector(&[0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1,
+            1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0]);
         let expected_reading = Reading {
             temperature: 35.1,
             humidity: 65.2,
@@ -182,10 +168,8 @@ mod tests {
 
     #[test]
     fn another_example_negative_temp() {
-        let result = Reading::from_binary_vector(&vec![
-            0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0,
-            1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1,
-        ]);
+        let result = Reading::from_binary_vector(&[0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0,
+            1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1]);
         let expected_reading = Reading {
             temperature: -10.1,
             humidity: 65.2,
