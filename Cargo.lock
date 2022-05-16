@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "gpio-am2302-rs"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "gpio-cdev",
  "thiserror",

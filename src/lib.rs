@@ -1,4 +1,4 @@
-mod am2302;
+pub mod am2302;
 mod binutils;
 mod cdev;
 
